@@ -1,19 +1,40 @@
-import { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import './App.css';
 import { WordsList } from './components/WordsList';
 
 const initialColors = ['red', 'orange', 'yellow', 'green', 'blue', 'pink', 'white', 'brown', 'black'];
 
-function App() {
-    const [count, setCount] = useState(0);
-    const [query, setQuery] = useState('');
-    // const [appliedQuery, setAppliedQuery] = useState('');
+// const debounce = (func: any, delay: number) => {
+const debounce = (func: React.Dispatch<React.SetStateAction<string>>, delay: number) => {
+    // let timerId: NodeJS.Timeout;
+    let timerId: number;
 
-    const gerVisibleColor = () => {
-        return initialColors.filter(color => color.startsWith(query));
+    return (...args: string[]) => {
+        clearTimeout(timerId);
+        timerId = setTimeout(func, delay, ...args);
     };
+};
 
-    const visibleColors = gerVisibleColor();
+function App({ colors = initialColors }) {
+// function App({ initialColors }: { initialColors: string[] }) {
+    // const [count, setCount] = useState(0);
+    const [query, setQuery] = useState('');
+    const [appliedQuery, setAppliedQuery] = useState('');
+
+    // const getVisibleColor = () => {
+    //     return initialColors.filter(color => color.startsWith(query));
+    // };
+
+    const applyQuery = useCallback(
+        debounce(setAppliedQuery, 1000),
+        []
+    );
+
+    const visibleColors = useMemo(() => {
+        console.log('Filtering: ', appliedQuery)
+
+        return colors.filter(color => color.startsWith(appliedQuery));
+    }, [colors, appliedQuery]);
 
     return (
         <div className="App">
@@ -24,17 +45,26 @@ function App() {
             <input
                 type="text"
                 value={query}
-                onChange={event => setQuery(event.target.value)}
+                onChange={event => {
+                    setQuery(event.target.value);
+                    applyQuery(event.target.value)
+                }}
             />
 
-            <button
+            {/* <input
+                type="text"
+                value={query}
+                onChange={event => setQuery(event.target.value)}
+            /> */}
+
+            {/* <button
                 type="button"
                 onClick={() => setCount(count + 1)}
             >
                 {count}++
-            </button>
+            </button> */}
 
-            <WordsList words={visibleColors}/>
+            <WordsList words={visibleColors} />
         </div>
     );
 }
